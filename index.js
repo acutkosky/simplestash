@@ -4,14 +4,17 @@ var redis = require('redis');
 var randomUrl = require('./randomUrl');
 
 var app = express();
-var client = redis.createClient();
+
+
+var hostname = (process.env.HOST || 'localhost')
+var port = (process.env.PORT || 5000);
+var redisURL = (process.env.REDIS_URL || undefined);
+
+var client = redis.createClient(redisURL);
 
 client.on("error", function (err) {
     console.log("Error " + err);
 });
-
-var hostname = (process.env.HOST || 'localhost')
-var port = (process.env.PORT || 5000);
 
 app.set('port', port);
 app.set('hostname', hostname);
