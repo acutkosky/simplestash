@@ -1,4 +1,5 @@
 var express = require('express');
+var bodyParser = require('body-parser');
 var redis = require('redis');
 
 var randomUrl = require('./randomUrl');
@@ -20,10 +21,11 @@ console.log("port: ", port);
 
 app.set('port', port);
 
+app.use(bodyParser.json());
+
 app.get('/', (req, res) => {
   res.send('hello world!');
 });
-
 
 var stashedData = {};
 var keyLength = 10
@@ -35,7 +37,8 @@ function getKey() {
 
 app.get('/stash/:toStash', (req, res) => {
   key = getKey();
-  client.set(key, req.params.toStash, "EX", defaultTimeoutSeconds, (err) => {
+  value = JSON.stringify({value: req.params.toStash});
+  client.set(key, value, "EX", defaultTimeoutSeconds, (err) => {
     if (err) {
       res.status(500).send("Stashing Error!");
     } else {
@@ -44,15 +47,26 @@ app.get('/stash/:toStash', (req, res) => {
   });
 });
 
+app.post('/stash', (req, res) => {
+  key = getKey();
+  value = JSON.stringify({value: req.body});
+  client.set(key, value, "EX", defaultTimeoutSeconds, (err) => {
+    if (err) {
+      res.status(500).send("Stashing Error!");
+    } else {
+      res.send({key});
+    }
+  });  
+})
+
 app.get('/unstash/:key', (req, res) => {
   client.get(req.params.key, (err, value) => {
     if (err) {
       res.status(500).send("Unstashing Error!");
     } else {
-      res.send({value})
+      res.send(JSON.parse(value));
     }
   });
-  // res.send({value: stashedData[req.params.key]});
 });
 
 
