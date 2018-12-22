@@ -16,8 +16,9 @@ client.on("error", function (err) {
     console.log("Error " + err);
 });
 
+console.log("port: ", port);
+
 app.set('port', port);
-app.set('hostname', hostname);
 
 app.get('/', (req, res) => {
   res.send('hello world!');
