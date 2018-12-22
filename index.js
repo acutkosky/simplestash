@@ -35,36 +35,40 @@ function getKey() {
   return key;
 }
 
-app.get('/stash/:toStash', (req, res) => {
-  key = getKey();
-  value = JSON.stringify({value: req.params.toStash});
-  client.set(key, value, "EX", defaultTimeoutSeconds, (err) => {
+function setData(key, data, timeoutSeconds, res) {
+  client.set(key, data, "EX", timeoutSeconds, (err) => {
     if (err) {
       res.status(500).send("Stashing Error!");
     } else {
       res.send({key})
     }
   });
+}
+
+app.get('/stash/:toStash', (req, res) => {
+  key = getKey();
+  timeoutSeconds = req.query.t || defaultTimeoutSeconds;
+  data = JSON.stringify({data: req.params.toStash});
+  setData(key, data, timeoutSeconds, res);
 });
 
 app.post('/stash', (req, res) => {
   key = getKey();
-  value = JSON.stringify({value: req.body});
-  client.set(key, value, "EX", defaultTimeoutSeconds, (err) => {
-    if (err) {
-      res.status(500).send("Stashing Error!");
-    } else {
-      res.send({key});
-    }
-  });  
+  timeoutSeconds = req.body.timeoutSeconds || defaultTimeoutSeconds;
+  data = JSON.stringify({data: req.body.data});
+  setData(key, data, timeoutSeconds, res); 
 })
 
 app.get('/unstash/:key', (req, res) => {
-  client.get(req.params.key, (err, value) => {
+  client.get(req.params.key, (err, data) => {
     if (err) {
       res.status(500).send("Unstashing Error!");
     } else {
-      res.send(JSON.parse(value));
+      if (data === null) {
+        res.send({});
+      } else {
+        res.send(JSON.parse(data));
+      }
     }
   });
 });
